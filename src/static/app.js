@@ -42,7 +42,47 @@ document.addEventListener("DOMContentLoaded", () => {
           details.participants.forEach((email) => {
             const li = document.createElement("li");
             li.className = "participant";
-            li.textContent = email;
+            
+            // Create participant text span
+            const emailSpan = document.createElement("span");
+            emailSpan.className = "participant-email";
+            emailSpan.textContent = email;
+            li.appendChild(emailSpan);
+            
+            // Create delete button
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "delete-participant";
+            deleteBtn.title = `Remove ${email}`;
+            deleteBtn.innerHTML = "✕";
+            deleteBtn.addEventListener("click", async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              try {
+                const response = await fetch(
+                  `/activities/${encodeURIComponent(name)}/unregister?email=${encodeURIComponent(email)}`,
+                  { method: "DELETE" }
+                );
+                
+                if (response.ok) {
+                  messageDiv.textContent = `Removed ${email} from ${name}`;
+                  messageDiv.className = "success";
+                  messageDiv.classList.remove("hidden");
+                  setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+                  fetchActivities();
+                } else {
+                  const result = await response.json();
+                  throw new Error(result.detail);
+                }
+              } catch (error) {
+                messageDiv.textContent = `Failed to remove participant: ${error.message}`;
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+                console.error("Error removing participant:", error);
+              }
+            });
+            
+            li.appendChild(deleteBtn);
             ul.appendChild(li);
           });
         } else {
